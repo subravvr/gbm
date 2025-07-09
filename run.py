@@ -2,9 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from gbm_module.gbm import GeometricBrownianMotion
 
-gBM = GeometricBrownianMotion(0.01,0.01)
-trange = np.linspace(0,100,101)
+trange = np.linspace(0,1000,1001)
 S0 = 50
-St = gBM.integrate(S0,trange)
-plt.plot(trange,St)
+gBM = GeometricBrownianMotion(0.001,0.01,S0,trange)
+St = gBM.integrate()
+plt.plot(gBM.trange,St)
+plt.show()
+
+Nmc = 10
+gbm_ensemble = gBM.ensemble(Nmc)
+plt.plot(gBM.trange,gbm_ensemble)
 plt.show()
