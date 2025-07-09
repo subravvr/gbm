@@ -17,14 +17,11 @@ class GeometricBrownianMotion:
                   iv: float,
                   trange: np.ndarray) -> np.ndarray:
         """
-        Integrates the gBM over trange with current
+        Evaluates integral of gBM over trange with current
         parameters.
         trange: [t0,...,tN]
         """
-        St = [iv]
-        dt = trange[1]-trange[0]
-        sqrt_dt = np.sqrt(dt)
-        for t in range(1,len(trange)):
-            St.append(St[-1] + self.alpha*St[-1]*dt + self.sig*St[-1]*np.random.normal()*sqrt_dt)
-        return np.array(St)
+        w = np.cumsum(np.random.normal(size=trange.shape))
+        return iv*np.exp(self.sig*w + (self.alpha - 0.5 * self.sig * self.sig)*trange)
+
         
