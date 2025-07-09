@@ -37,6 +37,15 @@ class GeometricBrownianMotion:
         for nmc in range(Nmc):
             ensemble_arr[:,nmc] = self.integrate()
         return ensemble_arr
+    
+    def update_args(self,
+                    newargs: list):
+        """
+        Updates parameters of the model.
+        newargs: [alpha,sigma,iv,trange].
+        """
+        self.alpha,self.sig,self.iv,self.trange = newargs
+
 
 
         
