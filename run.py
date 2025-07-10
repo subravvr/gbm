@@ -17,7 +17,7 @@ plt.show()
 
 pf_gbm = ParticleFilter(gBM)
 eval = pf_gbm.evaluate_args([25,np.linspace(0,1000,1001)],
-                            [0.001,0.05],
+                            [0.001,0.01],
                             Nevals=10)
 plt.plot(pf_gbm.gbm.trange,eval)
 plt.show()

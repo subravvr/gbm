@@ -41,3 +41,14 @@ class ParticleFilter:
         newargs = self.wrap_args(static_args,dynamic_args)
         self.gbm.update_args(newargs)
         return self.gbm.ensemble(Nevals)
+    
+    def load_data(self,
+                  data:np.ndarray):
+        """
+        Instantiates data stream (pure observations).
+        Instantiates a time domain nominally starting from
+        t=0 to t=T (T=len(data)-1).
+        data: np.ndarray of timeseries observations.
+        """
+        self.data = data
+        self.timedomain = np.arange(len(data))
