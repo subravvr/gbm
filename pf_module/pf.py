@@ -52,3 +52,98 @@ class ParticleFilter:
         """
         self.data = data
         self.timedomain = np.arange(len(data))
+    
+    def generate_particles(self,
+                           nparticles: int,
+                           bounds: np.ndarray)->np.ndarray:
+        """
+        Generates particles indpendently for each dynamic arg
+        and wraps them together.
+        nparticles: number of particles to be generated
+        bounds: 2 x len(dynamic_args) to define the bounds of generation
+        """
+        particles = np.array(
+            [
+                [np.random.uniform(low=bounds[0,0],high=bounds[1,0]),
+                 np.random.uniform(low=bounds[0,1],high=bounds[1,1]),]
+                 for n in range(nparticles)
+            ]
+        )
+        return particles
+    
+    def perturb_particles(self,
+                          particles: np.ndarray,
+                          scale_factors: np.ndarray)->np.ndarray:
+        """
+        Perturbs particles in state space for next timestep inferencing.
+        Assumes Brownian motion in state space.
+        particles: Nx2 array containing alpha, sigma particles.
+        scale_factors; 1x2 array scaling the Gaussian random walks in state space.
+        """
+        perturbations = np.vstack([
+            np.random.normal(loc=0,scale=scale_factors[0],size=particles.shape[0]),
+            np.random.normal(loc=0,scale=scale_factors[1],size=particles.shape[0])
+        ]).transpose()
+        return particles+perturbations
+    
+    def compute_point_likelihood(self,
+                                 model_point: float,
+                                 data_point: float,
+                                 emf=3)->float:
+        """
+        Computes the point Gaussian likelihood of a model value vs. data value.
+        model_point: value of the model
+        data_point: value of the observed data
+        """
+        return pow(2*np.pi*emf,-0.5)*np.exp(-0.5*pow((model_point-data_point)/emf,2))
+    
+    def compute_windowed_likelihood(self,
+                                    model_res: np.ndarray,
+                                    data_res: np.ndarray)->float:
+        """
+        Computes the averaged point likelihood over a window.
+        Assumes that model_res and data_res are already windowed over the desired
+        time domain.
+        """
+        averaged_likelihood = 0
+        for mp,dp in zip(model_res,data_res):
+            averaged_likelihood += self.compute_point_likelihood(mp,dp)/len(model_res)
+        return averaged_likelihood
+    
+    def filter(self,
+               windowsize: int,
+               bounds: np.ndarray,
+               perturb_scale: np.ndarray,
+               Nparts: np.ndarray,
+               pct_resample: float)->np.ndarray:
+        """
+        Main particle filter algorithm.
+        """
+        if self.data is None:
+            print("Must load data. Aborting.")
+            return
+        # window data
+        data_window_idx = [windowsize*i for i in range()]
+        windows = None ## DEFINE WINDOWS HERE:
+        ## [w0,w1,...]
+        ## w0 = [d0,d1,..] where d is data.
+        # instantiate particles
+        particles = self.generate_particles(Nparts,bounds)
+
+        for w in windows:
+            # compute particle evaluation over window
+            # have to adjust initial condition!!!
+
+            # compute likelihood of particle evaluations averaged over window
+
+            # weight particles with likelihood
+
+            # filter weights
+
+            # resample particles
+
+            # perturb particles in state space
+
+            # finish loop.
+            pass
+        
