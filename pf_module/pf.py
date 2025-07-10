@@ -112,6 +112,7 @@ class ParticleFilter:
     
     def filter(self,
                windowsize: int,
+               stride: int,
                bounds: np.ndarray,
                perturb_scale: np.ndarray,
                Nparts: np.ndarray,
@@ -122,19 +123,26 @@ class ParticleFilter:
         if self.data is None:
             print("Must load data. Aborting.")
             return
-        # window data
-        data_window_idx = [windowsize*i for i in range()]
-        windows = None ## DEFINE WINDOWS HERE:
-        ## [w0,w1,...]
-        ## w0 = [d0,d1,..] where d is data.
+        initial_window = self.data[:windowsize]
         # instantiate particles
         particles = self.generate_particles(Nparts,bounds)
+        weights = np.ones(particles.shape[0])/particles.shape[0]
+        sliding_evals = []
+        sliding_twindow = []
 
-        for w in windows:
-            # compute particle evaluation over window
-            # have to adjust initial condition!!!
-
+        for i in range(windowsize,len(self.data)-windowsize,stride):
+            local_data = self.data[i:i+windowsize]
+            local_trange = self.timedomain[i:i+windowsize]
+            iv = local_data[0]
+            # Evaluate current particles in over window
+            particle_evals = np.hstack([
+                self.evaluate_args([iv,np.arange(len(local_trange))],particle) for particle in particles
+                ])
+            sliding_evals.append(particle_evals)
+            sliding_twindow.append(local_trange)
+            
             # compute likelihood of particle evaluations averaged over window
+
 
             # weight particles with likelihood
 
@@ -145,5 +153,4 @@ class ParticleFilter:
             # perturb particles in state space
 
             # finish loop.
-            pass
-        
+        return sliding_twindow,sliding_evals

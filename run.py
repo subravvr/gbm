@@ -37,3 +37,10 @@ evaluations = np.hstack([
 plt.plot(trange,St,color='b',lw=3)
 plt.plot(pf_gbm.gbm.trange,evaluations)
 plt.show()
+
+sliding_t,sliding_evals = pf_gbm.filter(250,125,bounds,perturbation_scale,10,0.5)
+nwindows = np.arange(len(sliding_t))
+for i,tlocal,evals in zip(nwindows,sliding_t,sliding_evals):
+    plt.plot(tlocal,evals,c=f'C{i}')
+plt.plot(trange,St,color='b',lw=3)
+plt.show()
