@@ -84,7 +84,13 @@ class ParticleFilter:
             np.random.normal(loc=0,scale=scale_factors[0],size=particles.shape[0]),
             np.random.normal(loc=0,scale=scale_factors[1],size=particles.shape[0])
         ]).transpose()
-        return particles+perturbations
+        perturbed = particles+perturbations
+        while np.any(perturbed<=0):
+            perturbations = np.vstack([
+            np.random.normal(loc=0,scale=scale_factors[0],size=particles.shape[0]),
+            np.random.normal(loc=0,scale=scale_factors[1],size=particles.shape[0])]).transpose()
+            perturbed = particles + perturbations
+        return perturbed
     
     def compute_point_likelihood(self,
                                  model_point: float,
@@ -126,31 +132,43 @@ class ParticleFilter:
         initial_window = self.data[:windowsize]
         # instantiate particles
         particles = self.generate_particles(Nparts,bounds)
-        weights = np.ones(particles.shape[0])/particles.shape[0]
-        sliding_evals = []
-        sliding_twindow = []
+        curr_weights = np.ones(particles.shape[0])/particles.shape[0]
+        self.particle_history = [particles]
+        twindows = []
 
         for i in range(windowsize,len(self.data)-windowsize,stride):
+            # extract local data, trange
             local_data = self.data[i:i+windowsize]
             local_trange = self.timedomain[i:i+windowsize]
+            twindows.append(local_trange)
             iv = local_data[0]
+
             # Evaluate current particles in over window
             particle_evals = np.hstack([
-                self.evaluate_args([iv,np.arange(len(local_trange))],particle) for particle in particles
+                self.evaluate_args([iv,np.arange(windowsize)],particle) for particle in particles
                 ])
-            sliding_evals.append(particle_evals)
-            sliding_twindow.append(local_trange)
-            
             # compute likelihood of particle evaluations averaged over window
-
-
-            # weight particles with likelihood
-
+            likelihoods = [self.compute_windowed_likelihood(peval,local_data) for peval in particle_evals]
+            # recursively weight particles with likelihood and normalize between 0 and 1
+            curr_weights = [w*lh for w,lh in zip(curr_weights,likelihoods)]
+            curr_weights = curr_weights/np.sum(curr_weights)
             # filter weights
-
-            # resample particles
-
+            cutoff = np.quantile(curr_weights,pct_resample)
+            particles = particles[np.where(curr_weights>cutoff)]
+            # resample particles from surviving population
+            filtered_weights = curr_weights[np.where(curr_weights>cutoff)]
+            sample_weights = filtered_weights/np.sum(filtered_weights)
+            newparticles = []
+            while len(newparticles)<Nparts-len(particles):
+                u = np.random.uniform()
+                try:
+                    newparticle = particles[np.where(sample_weights>u)][0]
+                    newparticles.append(newparticle)
+                except:
+                    pass
+            particles = np.vstack([particles,np.array(newparticles)])
             # perturb particles in state space
-
+            particles = self.perturb_particles(particles,perturb_scale)
+            self.particle_history.append(particles)
             # finish loop.
-        return sliding_twindow,sliding_evals
+        self.twindows = np.array(twindows)
