@@ -122,7 +122,6 @@ class ParticleFilter:
                bounds: np.ndarray,
                perturb_scale: np.ndarray,
                Nparts: np.ndarray,
-               Nevals: int,
                pct_resample: float)->np.ndarray:
         """
         Main particle filter algorithm.
@@ -145,15 +144,11 @@ class ParticleFilter:
             iv = local_data[0]
 
             # Evaluate current particles in over window
-            particle_evals = [
-                self.evaluate_args([iv,np.arange(windowsize)],particle,Nevals=Nevals) for particle in particles
-                ]
+            particle_evals = np.hstack([
+                self.evaluate_args([iv,np.arange(windowsize)],particle) for particle in particles
+                ])
             # compute likelihood of particle evaluations averaged over window
-            likelihoods = []
-            for eval in particle_evals:
-                # evaluate the ensemble Neval for each particle
-                particle_ensemble_likelihood = [self.compute_windowed_likelihood(peval,local_data) for peval in eval]
-                likelihoods.append(np.mean(particle_ensemble_likelihood))
+            likelihoods = [self.compute_windowed_likelihood(peval,local_data) for peval in particle_evals]
             # recursively weight particles with likelihood and normalize between 0 and 1
             curr_weights = [w*lh for w,lh in zip(curr_weights,likelihoods)]
             curr_weights = curr_weights/np.sum(curr_weights)
