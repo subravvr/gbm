@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.stats import lognorm
 from gbm_module.gbm import GeometricBrownianMotion
 
 class ParticleFilter:
@@ -91,6 +92,16 @@ class ParticleFilter:
             np.random.normal(loc=0,scale=scale_factors[1],size=particles.shape[0])]).transpose()
             perturbed = particles + perturbations
         return perturbed
+    
+    def compute_tmesh_likelihood(self,
+                                 model_evals,
+                                 data_res,
+                                 Nevals: int,
+                                 twindow: np.ndarray,
+                                 tmesh: int):
+        # computes an ensemble of model evaluations over twindow
+        # defaults to evaluating the model at the first and last time points
+        pass
     
     def compute_point_likelihood(self,
                                  model_point: float,
